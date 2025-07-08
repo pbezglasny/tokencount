@@ -1,6 +1,7 @@
 pub mod files;
 
 use clap::Parser;
+use files::{FileContent, FileMatchConfig, get_matched_files};
 use std::collections::HashMap;
 use std::env;
 use std::io::{IsTerminal, Read};
@@ -9,6 +10,7 @@ use tokenizers::{FromPretrainedParameters, Tokenizer};
 const DEFAULT_TOKENIZER: &'static str = "bert-base-uncased";
 const TOKEN_COUNT_MODEL_VAR: &'static str = "TOKEN_COUNT_MODEL";
 const TOKEN_COUNT_FILE_VAR: &'static str = "TOKEN_COUNT_FILE_CONFIG";
+const FILE_CHUNK_SIZE: usize = 20;
 
 #[derive(Parser, Debug)]
 struct Arguments {
@@ -89,13 +91,50 @@ fn get_tokenizer(args: &Arguments) -> Tokenizer {
 
 fn main() {
     let args = Arguments::parse();
-    println!("{:?}", args);
     let tokenizer = get_tokenizer(&args);
     let stdin = std::io::stdin();
     if stdin.is_terminal() {
         // Standard use
-        // tokenizer.encode()
-        println!("is terminal");
+        let config = FileMatchConfig::new(
+            args.recursive || args.dereference_recursive,
+            args.dereference_recursive,
+            args.include,
+            args.exclude,
+            args.exclude_dir,
+        );
+        let mut token_count: u64 = 0;
+        for file_chunk in get_matched_files(args.files, config).chunks(FILE_CHUNK_SIZE) {
+            let file_contents: Vec<FileContent> = file_chunk
+                .iter()
+                .map(|file| FileContent::new(file.clone()))
+                .filter(|file| file.is_text_file())
+                .collect();
+            let files_names: Vec<String> = file_contents
+                .iter()
+                .map(|file| file.get_path_string())
+                .collect();
+            let data: Vec<String> = file_contents
+                .iter()
+                .map(|file| file.read_content())
+                .collect();
+            let lengths: Vec<usize> = tokenizer
+                .encode_batch(data, false)
+                .map(|vec| vec.iter().map(|enc| enc.len()).collect())
+                .map_err(|e| format!("Error while encoding, {:?}", e))
+                .unwrap();
+            if args.verbose {
+                for (file_name, length) in files_names.iter().zip(lengths.iter()) {
+                    println!("{} {}", file_name, length);
+                }
+            } else {
+                for length in lengths {
+                    token_count += length as u64;
+                }
+            }
+        }
+        if !args.verbose {
+            println!("{}", token_count);
+        }
     } else {
         // Pipe
         let data = read_pipe();

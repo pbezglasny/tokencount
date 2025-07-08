@@ -1,10 +1,46 @@
 use glob;
 use glob::Pattern;
+use std::fs::File;
+use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
 pub struct FileContent {
-    file_name: String,
-    content: String,
+    file: PathBuf,
+}
+
+impl FileContent {
+    pub fn new(file: PathBuf) -> Self {
+        FileContent { file }
+    }
+
+    fn is_text_file_inner(&self) -> io::Result<bool> {
+        let mut file = File::open(&self.file)?;
+        let mut buffer = [0; 1024];
+        let n = file.read(&mut buffer)?;
+        Ok(std::str::from_utf8(&buffer[..n]).is_ok())
+    }
+
+    pub fn is_text_file(&self) -> bool {
+        match self.is_text_file_inner() {
+            Ok(is_text) => is_text,
+            Err(e) => {
+                eprintln!("Error reading file {}: {}", self.file.display(), e);
+                false
+            }
+        }
+    }
+
+    pub fn read_content(&self) -> String {
+        std::fs::read_to_string(&self.file)
+            .unwrap_or_else(|_| panic!("Cannot read file: {}", self.file.display()))
+    }
+
+    pub fn get_path_string(&self) -> String {
+        self.file
+            .to_str()
+            .unwrap_or("")
+            .to_string()
+    }
 }
 
 pub struct FileMatchConfig {
@@ -93,7 +129,7 @@ impl PathMatcher {
 }
 
 fn get_folder_content(path: &Path) -> Vec<PathBuf> {
-    let mut files: Vec<PathBuf> = std::fs::read_dir(path)
+    let files: Vec<PathBuf> = std::fs::read_dir(path)
         .into_iter()
         .flat_map(|dir| {
             dir.filter(|entry| entry.is_ok())
@@ -169,6 +205,7 @@ pub fn get_matched_files(
     result
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
