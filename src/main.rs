@@ -12,6 +12,9 @@ const TOKEN_COUNT_MODEL_VAR: &'static str = "TOKEN_COUNT_MODEL";
 const TOKEN_COUNT_FILE_VAR: &'static str = "TOKEN_COUNT_JSON_CONFIG";
 const FILE_CHUNK_SIZE: usize = 20;
 
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Result<T> = std::result::Result<T, Error>;
+
 /// Token count utility
 /// Counts tokens in files using provided tokenizer model.
 /// If no model is provided, it uses `bert-base-uncased` by default.
@@ -63,7 +66,7 @@ fn read_pipe() -> String {
     buffer.trim().to_string()
 }
 
-fn get_tokenizer(args: &Arguments) -> Tokenizer {
+fn get_tokenizer(args: &Arguments) -> Result<Tokenizer> {
     if args.identifier.is_some() && args.json_config.is_some() {
         panic!("Both identifier and file options are presented. Only one can be used")
     }
@@ -73,12 +76,12 @@ fn get_tokenizer(args: &Arguments) -> Tokenizer {
             user_agent: HashMap::new(),
             token: args.token.clone(),
         };
-        Tokenizer::from_pretrained(args.identifier.clone().unwrap(), Some(params)).unwrap()
+        Tokenizer::from_pretrained(args.identifier.clone().unwrap(), Some(params))
     } else if args.json_config.is_some() {
-        Tokenizer::from_file(args.json_config.clone().unwrap()).unwrap()
+        Tokenizer::from_file(args.json_config.clone().unwrap())
     } else {
         if let Ok(file_path) = env::var(TOKEN_COUNT_FILE_VAR) {
-            Tokenizer::from_file(file_path).unwrap()
+            Tokenizer::from_file(file_path)
         } else {
             let tokenizer_model =
                 env::var(TOKEN_COUNT_MODEL_VAR).unwrap_or(DEFAULT_TOKENIZER.to_string());
@@ -87,14 +90,14 @@ fn get_tokenizer(args: &Arguments) -> Tokenizer {
                 user_agent: HashMap::new(),
                 token: args.token.clone(),
             };
-            Tokenizer::from_pretrained(tokenizer_model, Some(params)).unwrap()
+            Tokenizer::from_pretrained(tokenizer_model, Some(params))
         }
     }
 }
 
 fn main() {
     let args = Arguments::parse();
-    let tokenizer = get_tokenizer(&args);
+    let tokenizer = get_tokenizer(&args).unwrap();
     let stdin = std::io::stdin();
     if stdin.is_terminal() {
         // Standard use
