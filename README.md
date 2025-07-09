@@ -1,4 +1,4 @@
-TOKECOUNT
+TOKENCOUNT
 =====
 
 Simple cli wrapper around [Tokenizers](https://github.com/huggingface/tokenizers) library
