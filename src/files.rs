@@ -36,28 +36,25 @@ impl FileContent {
     }
 
     pub fn get_path_string(&self) -> String {
-        self.file
-            .to_str()
-            .unwrap_or("")
-            .to_string()
+        self.file.to_str().unwrap_or("").to_string()
     }
 }
 
 pub struct FileMatchConfig {
     recursive: bool,
     include_symlinks: bool,
-    include: Option<String>,
-    exclude: Option<String>,
-    exclude_dir: Option<String>,
+    include: Vec<String>,
+    exclude: Vec<String>,
+    exclude_dir: Vec<String>,
 }
 
 impl FileMatchConfig {
     pub fn new(
         recursive: bool,
         include_symlinks: bool,
-        include: Option<String>,
-        exclude: Option<String>,
-        exclude_dir: Option<String>,
+        include: Vec<String>,
+        exclude: Vec<String>,
+        exclude_dir: Vec<String>,
     ) -> Self {
         FileMatchConfig {
             recursive,
@@ -69,40 +66,35 @@ impl FileMatchConfig {
     }
 }
 
-fn option_pattern_to_glob(pattern_option: Option<String>) -> Option<Pattern> {
-    pattern_option
+fn vec_pattern_to_glob(pattern_vec: Vec<String>) -> Vec<Pattern> {
+    pattern_vec.into_iter()
         .map(|pattern| Pattern::new(&pattern))
         .map(|res| {
             res.map_err(|e| format!("Incorrect format of pattern: {}", e.msg))
                 .unwrap()
-        })
+        }).collect()
 }
 
-fn matches(pattern_opt: &Option<Pattern>, path: &Path) -> bool {
-    if pattern_opt.is_none() {
+fn matches(pattern_vec: &Vec<Pattern>, path: &Path) -> bool {
+    if pattern_vec.is_empty() {
         return false;
     }
-    let pattern = pattern_opt.as_ref().unwrap();
     let file_name = path.file_name().unwrap().to_str().unwrap();
-    pattern.matches(file_name)
+    pattern_vec.iter().any(|pattern| pattern.matches(file_name))
 }
 
 struct PathMatcher {
-    include_pattern: Option<Pattern>,
-    exclude_pattern: Option<Pattern>,
-    exclude_dir_pattern: Option<Pattern>,
+    include_pattern: Vec<Pattern>,
+    exclude_pattern: Vec<Pattern>,
+    exclude_dir_pattern: Vec<Pattern>,
 }
 
 impl PathMatcher {
-    pub fn new(
-        include: Option<String>,
-        exclude: Option<String>,
-        exclude_dir: Option<String>,
-    ) -> Self {
+    pub fn new(include: Vec<String>, exclude: Vec<String>, exclude_dir: Vec<String>) -> Self {
         PathMatcher {
-            include_pattern: option_pattern_to_glob(include),
-            exclude_pattern: option_pattern_to_glob(exclude),
-            exclude_dir_pattern: option_pattern_to_glob(exclude_dir),
+            include_pattern: vec_pattern_to_glob(include),
+            exclude_pattern: vec_pattern_to_glob(exclude),
+            exclude_dir_pattern: vec_pattern_to_glob(exclude_dir),
         }
     }
 
@@ -110,13 +102,13 @@ impl PathMatcher {
     /// Returns true if there are no patterns or the file matches the include pattern and
     /// does not match the exclude pattern.
     fn should_file_be_included(&self, path: &Path) -> bool {
-        if self.include_pattern.is_none() && self.exclude_pattern.is_none() {
+        if self.include_pattern.is_empty() && self.exclude_pattern.is_empty() {
             if path.is_file() {
                 true // No patterns, include all files
             } else {
                 !matches(&self.exclude_dir_pattern, path)
             }
-        } else if self.include_pattern.is_some() && path.is_file() {
+        } else if !self.include_pattern.is_empty() && path.is_file() {
             matches(&self.include_pattern, path)
         } else {
             if path.is_file() {
@@ -214,7 +206,7 @@ mod tests {
         let top_folder = std::env::current_dir().unwrap();
         let test_data = top_folder.join("resources").join("test_data");
         let files = vec![format!("{}", test_data.to_str().unwrap().to_owned())];
-        let config = FileMatchConfig::new(true, false, None, None, None);
+        let config = FileMatchConfig::new(true, false, Vec::new(), Vec::new(), Vec::new());
         let matched_files = get_matched_files(files, config);
         assert!(!matched_files.is_empty());
         let expected_files = vec![
@@ -233,7 +225,7 @@ mod tests {
         let top_folder = std::env::current_dir().unwrap();
         let test_data = top_folder.join("resources").join("test_data");
         let files = vec![format!("{}", test_data.to_str().unwrap().to_owned())];
-        let config = FileMatchConfig::new(true, true, None, None, None);
+        let config = FileMatchConfig::new(true, true, Vec::new(), Vec::new(), Vec::new());
         let matched_files = get_matched_files(files, config);
         assert!(!matched_files.is_empty());
         let expected_files = vec![
@@ -254,7 +246,13 @@ mod tests {
         let top_folder = std::env::current_dir().unwrap();
         let test_data = top_folder.join("resources").join("test_data");
         let files = vec![format!("{}", test_data.to_str().unwrap().to_owned())];
-        let config = FileMatchConfig::new(true, false, Some("*.txt".to_owned()), None, None);
+        let config = FileMatchConfig::new(
+            true,
+            false,
+            vec!["*.txt".to_owned()],
+            Vec::new(),
+            Vec::new(),
+        );
         let matched_files = get_matched_files(files, config);
         assert!(!matched_files.is_empty());
         let expected_files = vec![
@@ -272,7 +270,13 @@ mod tests {
         let top_folder = std::env::current_dir().unwrap();
         let test_data = top_folder.join("resources").join("test_data");
         let files = vec![format!("{}", test_data.to_str().unwrap().to_owned())];
-        let config = FileMatchConfig::new(true, false, None, Some("*.txt".to_string()), None);
+        let config = FileMatchConfig::new(
+            true,
+            false,
+            Vec::new(),
+            vec!["*.txt".to_string()],
+            Vec::new(),
+        );
         let matched_files = get_matched_files(files, config);
         assert!(!matched_files.is_empty());
         let expected_files = vec![test_data.join("b.json")];
@@ -284,7 +288,8 @@ mod tests {
         let top_folder = std::env::current_dir().unwrap();
         let test_data = top_folder.join("resources").join("test_data");
         let files = vec![format!("{}", test_data.to_str().unwrap().to_owned())];
-        let config = FileMatchConfig::new(true, false, None, None, Some("a_*".to_string()));
+        let config =
+            FileMatchConfig::new(true, false, Vec::new(), Vec::new(), vec!["a_*".to_string()]);
         let matched_files = get_matched_files(files, config);
         assert!(!matched_files.is_empty());
         let expected_files = vec![

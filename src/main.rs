@@ -38,13 +38,13 @@ struct Arguments {
     /// Glob. Show count only for files that names only matched to glob pattern.
     /// If include and exclude patterns are passed, include wins.
     #[arg(long, default_value = None)]
-    include: Option<String>,
+    include: Vec<String>,
     /// Glob pattern of files to exclude
     #[arg(long, default_value = None)]
-    exclude: Option<String>,
+    exclude: Vec<String>,
     /// Glob pattern of directories to exclude from counting
     #[arg(long, default_value = None)]
-    exclude_dir: Option<String>,
+    exclude_dir: Vec<String>,
     /// Print token count per file
     #[arg(short, long, default_value_t = false)]
     verbose: bool,
