@@ -58,6 +58,10 @@ tokecount -r mydirectory
 tokecount -R mydirectory
 # Show token counts for each file
 tokecount -v -r mydirectory
+# Count tokens in a file using a pipe
+echo "This is a test" | tokecount -i gpt2
+# Count tokens for files in a directory with specific patterns
+tokecount -r mydirectory --include "*.txt" --exclude "*.log"
 ```
 
 Environment Variables
