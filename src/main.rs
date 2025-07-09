@@ -9,9 +9,12 @@ use tokenizers::{FromPretrainedParameters, Tokenizer};
 
 const DEFAULT_TOKENIZER: &'static str = "bert-base-uncased";
 const TOKEN_COUNT_MODEL_VAR: &'static str = "TOKEN_COUNT_MODEL";
-const TOKEN_COUNT_FILE_VAR: &'static str = "TOKEN_COUNT_FILE_CONFIG";
+const TOKEN_COUNT_FILE_VAR: &'static str = "TOKEN_COUNT_JSON_CONFIG";
 const FILE_CHUNK_SIZE: usize = 20;
 
+/// Token count utility
+/// Counts tokens in files using provided tokenizer model.
+/// If no model is provided, it uses `bert-base-uncased` by default.
 #[derive(Parser, Debug)]
 struct Arguments {
     /// Name of tokenizer model to use, only one of identifier or file can be used
