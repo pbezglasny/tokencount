@@ -15,13 +15,13 @@ It is possible to use it in two ways:
 1. Provide text files to count tokens in it as arguments:
 
 ```bash
-tokecount <file1> <file2> ...
+tokencount <file1> <file2> ...
 ```
 
 2. Using pipe to pass text to it:
 
 ```bash
-echo "Hello world" | tokecount
+echo "Hello world" | tokencount
 ```
 
 Options
@@ -45,23 +45,23 @@ Examples:
 
 ```bash
 # Count tokens in a file
-tokecount myfile.txt
+tokencount myfile.txt
 # Count tokens in multiple files
-tokecount file1.txt file2.txt
+tokencount file1.txt file2.txt
 # Use a specific tokenizer model
-tokecount -i gpt2 myfile.txt
+tokencount -i gpt2 myfile.txt
 # Use a JSON configuration file
-tokecount -j config.json myfile.txt
+tokencount -j config.json myfile.txt
 # Recursively count tokens in a directory
-tokecount -r mydirectory
+tokencount -r mydirectory
 # Recursively count tokens in a directory including symbolic links
-tokecount -R mydirectory
+tokencount -R mydirectory
 # Show token counts for each file
-tokecount -v -r mydirectory
+tokencount -v -r mydirectory
 # Count tokens in a file using a pipe
-echo "This is a test" | tokecount -i gpt2
+echo "This is a test" | tokencount -i gpt2
 # Count tokens for files in a directory with specific patterns
-tokecount -r mydirectory --include "*.txt" --exclude "*.log"
+tokencount -r mydirectory --include "*.txt" --exclude "*.log"
 ```
 
 Environment Variables
