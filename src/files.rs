@@ -67,15 +67,17 @@ impl FileMatchConfig {
 }
 
 fn vec_pattern_to_glob(pattern_vec: Vec<String>) -> Vec<Pattern> {
-    pattern_vec.into_iter()
+    pattern_vec
+        .into_iter()
         .map(|pattern| Pattern::new(&pattern))
         .map(|res| {
             res.map_err(|e| format!("Incorrect format of pattern: {}", e.msg))
                 .unwrap()
-        }).collect()
+        })
+        .collect()
 }
 
-fn matches(pattern_vec: &Vec<Pattern>, path: &Path) -> bool {
+fn matches(pattern_vec: &[Pattern], path: &Path) -> bool {
     if pattern_vec.is_empty() {
         return false;
     }
@@ -110,12 +112,10 @@ impl PathMatcher {
             }
         } else if !self.include_pattern.is_empty() && path.is_file() {
             matches(&self.include_pattern, path)
+        } else if path.is_file() {
+            !matches(&self.exclude_pattern, path)
         } else {
-            if path.is_file() {
-                !matches(&self.exclude_pattern, path)
-            } else {
-                !matches(&self.exclude_pattern, path) && !matches(&self.exclude_dir_pattern, path)
-            }
+            !matches(&self.exclude_pattern, path) && !matches(&self.exclude_dir_pattern, path)
         }
     }
 }

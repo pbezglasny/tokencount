@@ -7,9 +7,9 @@ use std::env;
 use std::io::{IsTerminal, Read};
 use tokenizers::{FromPretrainedParameters, Tokenizer};
 
-const DEFAULT_TOKENIZER: &'static str = "bert-base-uncased";
-const TOKEN_COUNT_MODEL_VAR: &'static str = "TOKEN_COUNT_MODEL";
-const TOKEN_COUNT_FILE_VAR: &'static str = "TOKEN_COUNT_JSON_CONFIG";
+const DEFAULT_TOKENIZER: &str = "bert-base-uncased";
+const TOKEN_COUNT_MODEL_VAR: &str = "TOKEN_COUNT_MODEL";
+const TOKEN_COUNT_FILE_VAR: &str = "TOKEN_COUNT_JSON_CONFIG";
 const FILE_CHUNK_SIZE: usize = 20;
 
 type Error = Box<dyn std::error::Error + Send + Sync>;
