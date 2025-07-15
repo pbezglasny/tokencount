@@ -155,14 +155,13 @@ pub fn get_matched_files(
                 };
             }
             if path.is_dir() && !file_match_config.recursive {
-                panic!("Path {} is directory and recursive flag is false", file);
+                panic!("Path {file} is directory and recursive flag is false");
             }
             let mut folder_stack: Vec<PathBuf> = Vec::new();
             folder_stack.push(path.to_path_buf());
             let mut found_files = Vec::new();
 
-            while !folder_stack.is_empty() {
-                let top_folder = folder_stack.pop().unwrap();
+            while let Some(top_folder) = folder_stack.pop() {
                 if !path_matcher.should_file_be_included(&top_folder) {
                     continue;
                 }

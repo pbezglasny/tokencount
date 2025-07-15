@@ -130,7 +130,7 @@ fn main() {
                 .unwrap();
             if args.verbose {
                 for (file_name, length) in files_names.iter().zip(lengths.iter()) {
-                    println!("{} {}", file_name, length);
+                    println!("{file_name} {length}");
                 }
             } else {
                 for length in lengths {
@@ -139,7 +139,7 @@ fn main() {
             }
         }
         if !args.verbose {
-            println!("{}", token_count);
+            println!("{token_count}");
         }
     } else {
         // Pipe
@@ -150,10 +150,10 @@ fn main() {
             .map_err(|e| format!("Error while encoding, {:?}", e))
             .unwrap();
         let result = if args.verbose {
-            format!(". {}", token_count)
+            format!(". {token_count}")
         } else {
-            format!("{}", token_count)
+            format!("{token_count}")
         };
-        println!("{}", result);
+        println!("{result}");
     }
 }
