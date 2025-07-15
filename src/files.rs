@@ -174,10 +174,8 @@ pub fn get_matched_files(
                         if path_matcher.should_file_be_included(&entry) {
                             folder_stack.push(entry);
                         }
-                    } else {
-                        if path_matcher.should_file_be_included(&entry) {
-                            found_files.push(entry);
-                        }
+                    } else if path_matcher.should_file_be_included(&entry) {
+                        found_files.push(entry);
                     }
                 }
             }

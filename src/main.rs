@@ -79,19 +79,17 @@ fn get_tokenizer(args: &Arguments) -> Result<Tokenizer> {
         Tokenizer::from_pretrained(args.identifier.clone().unwrap(), Some(params))
     } else if args.json_config.is_some() {
         Tokenizer::from_file(args.json_config.clone().unwrap())
+    } else if let Ok(file_path) = env::var(TOKEN_COUNT_FILE_VAR) {
+        Tokenizer::from_file(file_path)
     } else {
-        if let Ok(file_path) = env::var(TOKEN_COUNT_FILE_VAR) {
-            Tokenizer::from_file(file_path)
-        } else {
-            let tokenizer_model =
-                env::var(TOKEN_COUNT_MODEL_VAR).unwrap_or(DEFAULT_TOKENIZER.to_string());
-            let params = FromPretrainedParameters {
-                revision: args.revision.clone(),
-                user_agent: HashMap::new(),
-                token: args.token.clone(),
-            };
-            Tokenizer::from_pretrained(tokenizer_model, Some(params))
-        }
+        let tokenizer_model =
+            env::var(TOKEN_COUNT_MODEL_VAR).unwrap_or(DEFAULT_TOKENIZER.to_string());
+        let params = FromPretrainedParameters {
+            revision: args.revision.clone(),
+            user_agent: HashMap::new(),
+            token: args.token.clone(),
+        };
+        Tokenizer::from_pretrained(tokenizer_model, Some(params))
     }
 }
 
@@ -126,7 +124,7 @@ fn main() {
             let lengths: Vec<usize> = tokenizer
                 .encode_batch(data, false)
                 .map(|vec| vec.iter().map(|enc| enc.len()).collect())
-                .map_err(|e| format!("Error while encoding, {:?}", e))
+                .map_err(|e| format!("Error while encoding, {e:?}"))
                 .unwrap();
             if args.verbose {
                 for (file_name, length) in files_names.iter().zip(lengths.iter()) {
@@ -147,7 +145,7 @@ fn main() {
         let token_count = tokenizer
             .encode(data, false)
             .map(|enc| enc.len())
-            .map_err(|e| format!("Error while encoding, {:?}", e))
+            .map_err(|e| format!("Error while encoding, {e:?}"))
             .unwrap();
         let result = if args.verbose {
             format!(". {token_count}")
