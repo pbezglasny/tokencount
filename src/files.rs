@@ -70,10 +70,7 @@ fn vec_pattern_to_glob(pattern_vec: Vec<String>) -> Vec<Pattern> {
     pattern_vec
         .into_iter()
         .map(|pattern| Pattern::new(&pattern))
-        .map(|res| {
-            res.map_err(|e| format!("Incorrect format of pattern: {}", e.msg))
-                .unwrap()
-        })
+        .map(|res| res.expect("Incorrect format of pattern "))
         .collect()
 }
 

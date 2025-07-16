@@ -61,8 +61,7 @@ fn read_pipe() -> String {
     let mut stdin = std::io::stdin();
     stdin
         .read_to_string(&mut buffer)
-        .map_err(|_| "Error while read data from pipe")
-        .unwrap();
+        .expect("Error while read data from pipe");
     buffer.trim().to_string()
 }
 
@@ -70,15 +69,15 @@ fn get_tokenizer(args: &Arguments) -> Result<Tokenizer> {
     if args.identifier.is_some() && args.json_config.is_some() {
         panic!("Both identifier and file options are presented. Only one can be used")
     }
-    if args.identifier.is_some() {
+    if let Some(model_name) = &args.identifier {
         let params = FromPretrainedParameters {
             revision: args.revision.clone(),
             user_agent: HashMap::new(),
             token: args.token.clone(),
         };
-        Tokenizer::from_pretrained(args.identifier.clone().unwrap(), Some(params))
-    } else if args.json_config.is_some() {
-        Tokenizer::from_file(args.json_config.clone().unwrap())
+        Tokenizer::from_pretrained(model_name, Some(params))
+    } else if let Some(json_config) = &args.json_config {
+        Tokenizer::from_file(json_config)
     } else if let Ok(file_path) = env::var(TOKEN_COUNT_FILE_VAR) {
         Tokenizer::from_file(file_path)
     } else {
@@ -95,7 +94,7 @@ fn get_tokenizer(args: &Arguments) -> Result<Tokenizer> {
 
 fn main() {
     let args = Arguments::parse();
-    let tokenizer = get_tokenizer(&args).unwrap();
+    let tokenizer = get_tokenizer(&args).expect("Failed to initialize tokenizer");
     let stdin = std::io::stdin();
     if stdin.is_terminal() {
         // Standard use
@@ -124,8 +123,7 @@ fn main() {
             let lengths: Vec<usize> = tokenizer
                 .encode_batch(data, false)
                 .map(|vec| vec.iter().map(|enc| enc.len()).collect())
-                .map_err(|e| format!("Error while encoding, {e:?}"))
-                .unwrap();
+                .expect("Error while encoding text");
             if args.verbose {
                 for (file_name, length) in files_names.iter().zip(lengths.iter()) {
                     println!("{file_name} {length}");
@@ -145,8 +143,7 @@ fn main() {
         let token_count = tokenizer
             .encode(data, false)
             .map(|enc| enc.len())
-            .map_err(|e| format!("Error while encoding, {e:?}"))
-            .unwrap();
+            .expect("Error while encoding text");
         let result = if args.verbose {
             format!(". {token_count}")
         } else {
